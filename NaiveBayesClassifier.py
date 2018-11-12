@@ -57,7 +57,6 @@ def train_bayes(train_data,fract,alpha=0.0000001):
     #v= vocab, doc=document, a=author, dv=distinct word
     #grab general info of the word
     v_word_dict = {}
-    #doc_word_dict={}
     dv_tot = 0
     doc_tot=0
     v_tot=0
@@ -68,7 +67,6 @@ def train_bayes(train_data,fract,alpha=0.0000001):
 
     #grab the relation between word and author
     a_v_word_dict={}
-    #a_doc_word_dict={}
 
     #final_out put
     f_word_dict = {}
@@ -77,7 +75,6 @@ def train_bayes(train_data,fract,alpha=0.0000001):
 
     for i in range(0,15):
         a_v_word_dict[i]={}
-        #a_doc_word_dict[i]={}
         f_word_dict[i]={}
     'train data'
     for data in train_data:
@@ -86,7 +83,6 @@ def train_bayes(train_data,fract,alpha=0.0000001):
         doc_tot += 1
         a_list[(label - 1)] += 1
 
-        word_flag = {}
         for word in doc:
             v_tot += 1
             if v_word_dict.has_key(word) == False:
@@ -98,80 +94,41 @@ def train_bayes(train_data,fract,alpha=0.0000001):
             v_word_dict[word] += 1
             a_v_word_dict[(label - 1)][word] += 1
 
-            '''
-            if word_flag.has_key(word) == False:
-                word_flag[word] = 1
-                if a_doc_word_dict[(label - 1)].has_key(word) == False:
-                    a_doc_word_dict[(label - 1)][word] =0
-                if doc_word_dict.has_key(word) == False:
-                    doc_word_dict[word] =0
-                a_doc_word_dict[(label - 1)][word] += 1
-                doc_word_dict[word] +=1
-            '''
-
     'cal P(word/author) probability'
     for word in v_word_dict.keys():
         nkv=v_word_dict[word]
-        #nkdoc=doc_word_dict[word]
         for i in range(0, 15):
             if a_v_word_dict[i].has_key(word):
                 nkva = a_v_word_dict[i][word]
-                #nkdoca=a_doc_word_dict[i][word]
             else:
                 nkva = 0
-                #nkdoca=0
             rv_score=-1/(math.log(((float(nkva) + alpha) / (v_word_dict[word] + alpha * dv_tot))))
-            #rdoc_score = -1/(math.log(((float(nkdoca) + alpha) / (doc_word_dict[word] + alpha * dv_tot))))
             IDFv_score=float(v_tot)/nkv
-            #IDFdoc_score=float(doc_tot)/nkdoc
-            f_word_dict[i][word] = (1-fract)*IDFv_score*rv_score/(a_list[i])+(fract)*IDFv_score*rv_score
-
-
+            f_word_dict[i][word] = (fract)*IDFv_score*rv_score/(a_list[i])+(1-fract)*IDFv_score*rv_score
             
     'cal P(author)'
     for i in range(0, 15):
         f_a_list[i] = -1/math.log(float(a_list[i]) / doc_tot)
-
-    'wonder around about data'
-    #for i in range(0,15):
-    #    print (i+1)
-    #    print sorted(f_word_dict[i].items(), key=operator.itemgetter(1))[-10:-1]
-
     'train_end'
-    #print a_list
-
     return (f_word_dict,f_a_list)
 
 def test_model(test_data,word_dict,author_list):
     predictions = []
     test_labels = []
     n=0
-    #scoreboard = []
-    #for i in range(0,15):
-    #    scoreboard.append([0,0])
-
     for data in test_data:
         n+=1
         doc = data[0]
         label = int(data[1])
-        #scoreboard[(label-1)][1]+=1
         score = author_list[:]
         for word in doc:
             for i in range(0, 15):
                 score[i] = score[i] + word_dict[i][word]
         prediction=score.index(max(score)) + 1
-        #if prediction==label:
-        #    scoreboard[(label - 1)][0] += 1
         predictions.append(prediction)
         test_labels.append(label)
-        #print n
-        #print score
-
 
     acc_score = compute_acc(predictions, test_labels)
-    #for i in range(0,15):
-    #    print (i+1)
-    #    print scoreboard[i]
     return (acc_score,predictions,test_labels)
 
 
@@ -200,10 +157,8 @@ if __name__ == '__main__':
     #para_list=[0.0061,0.0062,0.0063]
     #train_set=divide_training_set(train_data, 3)
     #para_f=cross_validation(para_list, train_set)
-    #print 'para_f'
-    #print para_f
 
-    (word_dict, author_list)=train_bayes(train_data,0.0062)
+    (word_dict, author_list)=train_bayes(train_data,0.9938)
     train_end=time.time()
 
     test_start=time.time()
@@ -212,19 +167,10 @@ if __name__ == '__main__':
     test_end=time.time()
     for prediction in predictions:
         print prediction
-    print '%.3f,%s' % (float(train_end-train_start),'seconds (training)')
-    print '%.3f,%s' % (float(test_end-test_start),'seconds (testing)')
+    print '%d,%s' % (int(train_end-train_start),'seconds (training)')
+    print '%d,%s' % (int(test_end-test_start),'seconds (testing)')
     print '%.3f,%s' % (acc_score_t, '(training)')
     print '%.3f,%s' % (acc_score, '(testing)')
-
-
-
-
-
-    #print prediction
-    #print test_labels
-    #print 'tot acc'
-    #print acc_score
 
 
 
